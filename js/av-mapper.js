@@ -14,43 +14,57 @@ class AvaFieldMapper {
       this.currentTargetNode;
   }
 
+  getSourceNode() {
+    return this.currentSourceNode;
+  }
+
+  setSourceNode(node) {
+    this.currentSourceNode = node;
+  }
+
+  getTargetNode() {
+    return this.currentTargetNode;
+  }
+
+  setTargetNode(node) {
+    this.currentTargetNode = node;
+  }
+
   /**
    * 
    */
   initSvg() {
     let _this = this;
-    SVG.on(document, 'DOMContentLoaded', function () {
-      let draw = new SVG(_this.mapperId);
-      let nested = draw.nested().addClass('key');
-      _this.maxFieldWidth = _this.findFieldsMaxWidth(_this.inputJSON.nodeDataArray);
-      let sourceData = _this.inputJSON.nodeDataArray[0];
-      let targetData = _this.inputJSON.nodeDataArray[1]
-      let targetGroup = _this.createFieldsGroup(nested, targetData.key, targetData.fields, 'target');
-      let sourceGroup = _this.createFieldsGroup(nested, sourceData.key, sourceData.fields, 'source');
-  
-      let drawHeight = (_this.targetGroupHeight > _this.sourceGroupHeight? _this.targetGroupHeight : _this.sourceGroupHeight) + 30;
-      
-      targetGroup.rect(_this.maxFieldWidth + 30, drawHeight).attr({
-        x: 2,
-        y: 2,
-        fill: '#fff',
-        stroke: '#059bd2',
-        'stroke-width': 2,
-      }).back();
-  
-      sourceGroup.rect(_this.maxFieldWidth + 30, drawHeight).attr({
-        x: 2,
-        y: 2,
-        fill: '#fff',
-        stroke: '#059bd2',
-        'stroke-width': 2,
-      }).back();
-  
-      targetGroup.x(_this.maxFieldWidth + 150);
-      draw.height(drawHeight + 4);
-  
-      _this.drawConnectors(sourceGroup, targetGroup, _this.inputJSON.linkDataArray);
-    });
+    let draw = new SVG(_this.mapperId);
+    let nested = draw.nested().addClass('key');
+    _this.maxFieldWidth = _this.findFieldsMaxWidth(_this.inputJSON.nodeDataArray);
+    let sourceData = _this.inputJSON.nodeDataArray[0];
+    let targetData = _this.inputJSON.nodeDataArray[1];
+    let targetGroup = _this.createFieldsGroup(nested, targetData.key, targetData.fields, 'target');
+    let sourceGroup = _this.createFieldsGroup(nested, sourceData.key, sourceData.fields, 'source');
+
+    let drawHeight = (_this.targetGroupHeight > _this.sourceGroupHeight? _this.targetGroupHeight : _this.sourceGroupHeight) + 30;
+    
+    targetGroup.rect(_this.maxFieldWidth + 30, drawHeight).attr({
+      x: 2,
+      y: 2,
+      fill: '#fff',
+      stroke: '#059bd2',
+      'stroke-width': 2,
+    }).back();
+
+    sourceGroup.rect(_this.maxFieldWidth + 30, drawHeight).attr({
+      x: 2,
+      y: 2,
+      fill: '#fff',
+      stroke: '#059bd2',
+      'stroke-width': 2,
+    }).back();
+
+    targetGroup.x(_this.maxFieldWidth + 150);
+    draw.height(drawHeight + 4);
+
+    _this.drawConnectors(sourceGroup, targetGroup, _this.inputJSON.linkDataArray);
   }
 
   /**
@@ -80,15 +94,16 @@ class AvaFieldMapper {
   createFieldsGroup(nested, key, fieldSet, type) {
     var group = nested.group().attr({class: key});
     var x = 2, y = -5;
+
     this.drawFieldNode(group, key, key, x, y, 'header');
+    y = 45;
+    this.drawFieldNode(group, key, '+ ADD NEW', x, y, 'button');
   
     fieldSet.forEach((field) => {
       y += 47;
-      if (type === 'source') {
-        this.sourceGroupHeight +=47;
-      } else {
-        this.targetGroupHeight +=47;
-      }
+      
+      this.targetGroupHeight +=35;
+
       this.drawFieldNode(group, key, field.name, x, y, type);
     });
   
@@ -136,21 +151,21 @@ class AvaFieldMapper {
     
     if (type === 'source') {
       fieldGroup.on('click', function (e) {
-        _this.currentSourceNode = e.currentTarget.instance;
-        _this.currentTargetNode = null;
+        _this.setSourceNode(e.currentTarget.instance);
+        _this.setTargetNode(undefined);
         _this.toggleNodeSelection(fieldGroup);
       });
     }
   
     if (type === 'target') {
       fieldGroup.on('click', function(e) {
-        _this.currentTargetNode = e.currentTarget.instance;
-        if (!_this.currentSourceNode) {
+        _this.setTargetNode(e.currentTarget.instance);
+        if (!_this.getSourceNode()) {
           return;
         }
-        _this.toggleNodeSelection(_this.currentSourceNode);
-        _this.createConnector(fieldGroup, _this.currentSourceNode, _this.currentTargetNode);
-        _this.currentSourceNode =  null;
+        _this.toggleNodeSelection(_this.getSourceNode());
+        _this.createConnector(fieldGroup, _this.getSourceNode(), _this.getTargetNode());
+        _this.setSourceNode(undefined);
       });
     }
   }
@@ -195,11 +210,29 @@ class AvaFieldMapper {
     var x2 = target.parent().x() + target.cx() - targetRectNode.width()/2;
     var y2 = target.parent().y() + target.cy();
     var previousConnector = grandParent.select('line.'+source.data('name') + '_line');
+    var connector;
     if (previousConnector.length()) {
-      previousConnector.replace(grandParent.line(x1, y1, x2, y2).stroke({ width: 3, color: '#72767e' }).attr({class: source.data('name') + '_line'}));
+      connector = grandParent.line(x1, y1, x2, y2).stroke({ width: 3, color: '#72767e' }).attr({class: source.data('name') + '_line'});
+      previousConnector.replace(connector);
     } else {
-      grandParent.line(x1, y1, x2, y2).stroke({ width: 3, color: '#72767e' }).attr({class: source.data('name') + '_line'});
+      connector = grandParent.line(x1, y1, x2, y2).stroke({ width: 3, color: '#72767e' }).attr({class: source.data('name') + '_line'});
     }
+
+    var marker = grandParent.marker();
+        marker.attr({
+            viewBox:'0 -5 10 10',
+            markerWidth: 15,
+            markerHeight: 15,
+            refX: 2,
+            refY: 2,
+            orient: 'auto'
+        });
+      var arrowhead = grandParent.path(
+        'M0,0 V4 L2,2 Z'
+      ).fill('#059bd2');
+      marker.add(arrowhead);
+      connector.marker('end', marker);
+
     this.updateLinkData(source, target);
   }
 
@@ -221,10 +254,10 @@ class AvaFieldMapper {
     });
   
     var nodeLinkData = {
-      from: source.data('name'),
-      fromPort: source.data('key'),
-      to: target.data('name'),
-      toPort: target.data('key')
+      from: source.data('key'), 
+      fromPort: source.data('name'),
+      to: target.data('key'),
+      toPort: target.data('name')  
     }
   
     if (currentNodeLinkIndex > -1) {
@@ -244,24 +277,35 @@ class AvaFieldMapper {
    */
   drawConnectors(sourceGroup, targetGroup, nodeLinkData = []) {
     nodeLinkData.forEach((link) => {
-      var sourceId = link.from;
-      var targetId = link.to;
-      var sourceField = sourceGroup.select('g.' + link.from + '_source').members[0];
-      var targetField = targetGroup.select('g.' + link.to + '_target').members[0];
-      var sourceRectNode = sourceField.select('rect').members[0];
-      var targetRectNode = sourceField.select('rect').members[0];
-      var x1 = sourceField.cx() + sourceRectNode.width()/2;
-      var y1 = sourceField.cy();
-      var x2 = targetField.parent().x() + targetField.cx() - targetRectNode.width()/2;
-      var y2 = targetField.parent().y() + targetField.cy();
-  
-      sourceGroup.parent().line(x1, y1, x2, y2).stroke({ width: 3, color: '#72767e' }).attr({class: sourceId + '_line'});
+      var sourceId = link.fromPort;
+      var targetId = link.toPort;
+      var sourceField = sourceGroup.select('g.' + link.fromPort + '_source').members[0];
+      var targetField = targetGroup.select('g.' + link.toPort + '_target').members[0];
+      if (sourceField && targetField) {
+        var sourceRectNode = sourceField.select('rect').members[0];
+        var targetRectNode = sourceField.select('rect').members[0];
+        var x1 = sourceField.cx() + sourceRectNode.width()/2;
+        var y1 = sourceField.cy();
+        var x2 = targetField.parent().x() + targetField.cx() - targetRectNode.width()/2;
+        var y2 = targetField.parent().y() + targetField.cy();
+    
+        var connector = sourceGroup.parent().line(x1, y1, x2, y2).stroke({ width: 3, color: '#72767e' }).attr({class: sourceId + '_line'});
+
+        var marker = sourceGroup.parent().marker(); // or draw.defs().marker()
+        marker.attr({
+            viewBox:'0 -5 10 10',
+            markerWidth: 15,
+            markerHeight: 15,
+            refX: 2,
+            refY: 2,
+            orient: 'auto'
+        });
+      var arrowhead = sourceGroup.parent().path(
+        'M0,0 V4 L2,2 Z'
+      ).fill('#059bd2');
+      marker.add(arrowhead);
+      connector.marker('end', marker);
+      }
     });
   }
-}
-
-if (SVG.supported) {
-  new AvaFieldMapper('av-mapper1', inputJSON_1).initSvg();
-} else {
-  alert('SVG not supported')
 }

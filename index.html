@@ -17,8 +17,18 @@
 <body>
   <textarea id="av-mapper-output" rows="4" cols="80"></textarea>
   <br><br>
-  <div id="av-mapper1" style="height: 400px; overflow: auto; margin: 0 auto;"></div>
-  <!-- <div id="av-mapper2" style="height: 400px; overflow: auto; margin: 0 auto;"></div> -->
+  <div id="av-mapper1" class="av-mapper" style="height: 400px; overflow: auto; margin: 0 auto;"></div>
+  <br/><br/>
+  <div id="av-mapper2" style="height: 400px; overflow: auto; margin: 0 auto;"></div>
   <script src="js/av-mapper.js"></script>
+  <script>
+    //Creating new mapper instances
+    if (SVG.supported) {
+      new AvaFieldMapper('av-mapper1', inputJSON_4).initSvg();
+      new AvaFieldMapper('av-mapper2', inputJSON_3).initSvg();
+    } else {
+      alert('SVG not supported')
+    }
+  </script>
 </body>
 </html>

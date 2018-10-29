@@ -23,7 +23,12 @@ var inputJSON_1 = {
     }
   ],
   linkDataArray: [
-    {"from":"fieldThree","fromPort":"Salesforce","to":"fieldD","toPort":"AvaTax"}
+    {
+			"from":"fieldThree",
+			"fromPort":"Salesforce",
+			"to":"fieldD",
+			"toPort":"AvaTax"
+		}
   ]
 };
 
@@ -617,4 +622,136 @@ var inputJSON_2 = {
 		"to": "AvaTax",
 		"toPort": "customerCode"
 	}]
+};
+
+var inputJSON_3 = {
+	"nodeDataArray": [{
+		"key": "Billing",
+		"fields": [{
+			"name": "BillingStreet"
+		}, {
+			"name": "BillingCity"
+		}, {
+			"name": "BillingState"
+		}, {
+			"name": "BillingCountry"
+		}, {
+			"name": "BillingPostalCode"
+		}]
+	}, {
+		"key": "AvaTax",
+		"fields": [{
+			"name": "line1"
+		}, {
+			"name": "line2"
+		}, {
+			"name": "line3"
+		}, {
+			"name": "city"
+		}, {
+			"name": "region"
+		}, {
+			"name": "country"
+		}, {
+			"name": "postalcode"
+		}, {
+			"name": "latitude"
+		}, {
+			"name": "longitude"
+		}]
+	}],
+	"linkDataArray": [{
+		"from": "Billing",
+		"fromPort": "BillingStreet",
+		"to": "AvaTax",
+		"toPort": "line1"
+	}, {
+		"from": "Billing",
+		"fromPort": "BillingCity",
+		"to": "AvaTax",
+		"toPort": "city"
+	}, {
+		"from": "Billing",
+		"fromPort": "BillingState",
+		"to": "AvaTax",
+		"toPort": "region"
+	}, {
+		"from": "Billing",
+		"fromPort": "BillingCountry",
+		"to": "AvaTax",
+		"toPort": "country"
+	}, {
+		"from": "Billing",
+		"fromPort": "BillingPostalCode",
+		"to": "AvaTax",
+		"toPort": "postalcode"
+	}],
+	"linkFromPortIdProperty": "fromPort",
+	"linkToPortIdProperty": "toPort"
+};
+
+var inputJSON_4 = {
+	"nodeDataArray": [{
+		"key": "AvaTaxResponse",
+		"fields": [{
+			"name": "line1"
+		}, {
+			"name": "line2"
+		}, {
+			"name": "line3"
+		}, {
+			"name": "city"
+		}, {
+			"name": "region"
+		}, {
+			"name": "country"
+		}, {
+			"name": "postalcode"
+		}, {
+			"name": "latitude"
+		}, {
+			"name": "longitude"
+		}]
+	}, {
+		"key": "BillingResponse",
+		"fields": [{
+			"name": "BillingStreet"
+		}, {
+			"name": "BillingCity"
+		}, {
+			"name": "BillingState"
+		}, {
+			"name": "BillingCountry"
+		}, {
+			"name": "BillingPostalCode"
+		}]
+	}],
+	"linkDataArray": [{
+		"from": "AvaTaxResponse",
+		"fromPort": "line1",
+		"to": "BillingResponse",
+		"toPort": "BillingStreet"
+	}, {
+		"from": "AvaTaxResponse",
+		"fromPort": "city",
+		"to": "BillingResponse",
+		"toPort": "BillingCity"
+	}, {
+		"from": "AvaTaxResponse",
+		"fromPort": "region",
+		"to": "BillingResponse",
+		"toPort": "BillingState"
+	}, {
+		"from": "AvaTaxResponse",
+		"fromPort": "country",
+		"to": "BillingResponse",
+		"toPort": "BillingCountry"
+	}, {
+		"from": "AvaTaxResponse",
+		"fromPort": "postalcode",
+		"to": "BillingResponse",
+		"toPort": "BillingPostalCode"
+	}],
+	"linkFromPortIdProperty": "fromPort",
+	"linkToPortIdProperty": "toPort"
 };
