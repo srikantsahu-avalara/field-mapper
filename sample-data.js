@@ -728,11 +728,6 @@ var inputJSON_4 = {
 	}],
 	"linkDataArray": [{
 		"from": "AvaTaxResponse",
-		"fromPort": "line1",
-		"to": "BillingResponse",
-		"toPort": "BillingStreet"
-	}, {
-		"from": "AvaTaxResponse",
 		"fromPort": "city",
 		"to": "BillingResponse",
 		"toPort": "BillingCity"

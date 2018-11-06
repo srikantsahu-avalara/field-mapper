@@ -64,7 +64,20 @@ class AvaFieldMapper {
     targetGroup.x(_this.maxFieldWidth + 150);
     draw.height(drawHeight + 4);
 
-    _this.drawConnectors(sourceGroup, targetGroup, _this.inputJSON.linkDataArray);
+    setTimeout(_this.drawConnectors(sourceGroup, targetGroup, _this.inputJSON.linkDataArray), 4000);
+
+    let text = sourceGroup.text('Click to remove');
+    text.attr({
+      'font-weight': 'bold',
+      cursor: 'pointer',
+      'font-size': 12,
+      class: 'removeTooltip',
+      fill: '#ff6600',
+      family: 'sans-serif',
+      x: 210,
+      y: 30,
+      'fill-opacity': 0
+    });
   }
 
   /**
@@ -96,9 +109,12 @@ class AvaFieldMapper {
     var x = 2, y = -5;
 
     this.drawFieldNode(group, key, key, x, y, 'header');
-    y = 45;
-    this.drawFieldNode(group, key, '+ ADD NEW', x, y, 'button');
-  
+    if (type === 'target') {
+      y = 45;
+
+      this.drawFieldNode(group, key, '+ ADD NEW', x, y, 'button');
+    }
+
     fieldSet.forEach((field) => {
       y += 47;
       
@@ -200,6 +216,7 @@ class AvaFieldMapper {
    * @param {*} target 
    */
   createConnector(parent, source, target) {
+    var _this = this;
     var grandParent = parent.parent().parent();
     var sourceId = source.data('class');
     var targetId = target.data('class');
@@ -218,6 +235,11 @@ class AvaFieldMapper {
       connector = grandParent.line(x1, y1, x2, y2).stroke({ width: 3, color: '#72767e' }).attr({class: source.data('name') + '_line'});
     }
 
+    connector.data({
+      source: source.data('name'),
+      target: target.data('name')
+    });
+
     var marker = grandParent.marker();
         marker.attr({
             viewBox:'0 -5 10 10',
@@ -234,6 +256,34 @@ class AvaFieldMapper {
       connector.marker('end', marker);
 
     this.updateLinkData(source, target);
+
+    connector.on('mouseover', function(e) {
+      var tooltip = grandParent.select('text.removeTooltip');
+      tooltip.attr({
+        'fill-opacity': 1,
+        x: e.layerX - 30, //(x1 + x2)/2 - 50,
+        y: e.layerY + 10 //(y1 + y2)/2 - 40
+      })
+    });
+
+    connector.on('mouseout', function(e) {
+      var tooltip = grandParent.select('text.removeTooltip');
+      setTimeout(function() {
+        tooltip.attr({
+        'fill-opacity': 0
+      });
+    }, 1000);
+    });
+
+    connector.on('click', function(e) {
+      var connectorData = e.target.dataset;
+      _this.removeLinkData(connectorData);
+      e.target.remove();
+      var tooltip = grandParent.select('text.removeTooltip');
+      tooltip.attr({
+      'fill-opacity': 0
+      });
+    });
   }
 
   /**
@@ -242,9 +292,6 @@ class AvaFieldMapper {
    * @param {*} target 
    */
   updateLinkData(source, target) {
-    // linkDataArray: [
-    //   { from: "Record1", fromPort: "field1", to: "Record2", toPort: "fieldA" }
-    // ]
     var inputLinkDataArray = this.inputJSON.linkDataArray || [];
     var currentNodeLinkIndex = inputLinkDataArray.findIndex((node, index) => {
       if (node.from === source.data('name')) {
@@ -269,6 +316,20 @@ class AvaFieldMapper {
     document.getElementById('av-mapper-output').value = JSON.stringify(this.inputJSON);
   }
 
+  removeLinkData(connector) {
+    var inputLinkDataArray = this.inputJSON.linkDataArray || [];
+    var currentNodeLinkIndex = inputLinkDataArray.findIndex((node, index) => {
+      if (node.from === connector.source && node.to === connector.target) {
+        return index;
+      }
+      return -1;
+    });
+    if(currentNodeLinkIndex !== -1) {
+      inputLinkDataArray.splice(currentNodeLinkIndex, 1);
+    }
+
+    document.getElementById('av-mapper-output').value = JSON.stringify(this.inputJSON);    
+  }
   /**
    * 
    * @param {*} sourceGroup 
@@ -276,36 +337,72 @@ class AvaFieldMapper {
    * @param {*} nodeLinkData 
    */
   drawConnectors(sourceGroup, targetGroup, nodeLinkData = []) {
-    nodeLinkData.forEach((link) => {
-      var sourceId = link.fromPort;
-      var targetId = link.toPort;
-      var sourceField = sourceGroup.select('g.' + link.fromPort + '_source').members[0];
-      var targetField = targetGroup.select('g.' + link.toPort + '_target').members[0];
-      if (sourceField && targetField) {
-        var sourceRectNode = sourceField.select('rect').members[0];
-        var targetRectNode = sourceField.select('rect').members[0];
-        var x1 = sourceField.cx() + sourceRectNode.width()/2;
-        var y1 = sourceField.cy();
-        var x2 = targetField.parent().x() + targetField.cx() - targetRectNode.width()/2;
-        var y2 = targetField.parent().y() + targetField.cy();
-    
-        var connector = sourceGroup.parent().line(x1, y1, x2, y2).stroke({ width: 3, color: '#72767e' }).attr({class: sourceId + '_line'});
+    var _this = this;
+    if (nodeLinkData.length) {
+      nodeLinkData.forEach((link) => {
+        var sourceId = link.fromPort;
+        var targetId = link.toPort;
+        var sourceField = sourceGroup.select('g.' + link.fromPort + '_source').members[0];
+        var targetField = targetGroup.select('g.' + link.toPort + '_target').members[0];
+        if (sourceField && targetField) {
+          var sourceRectNode = sourceField.select('rect').members[0];
+          var targetRectNode = targetField.select('rect').members[0];
+          var x1 = sourceField.cx() + sourceRectNode.width()/2;
+          var y1 = sourceField.cy();
+          var x2 = targetField.parent().x() + targetField.cx() - targetRectNode.width()/2;
+          var y2 = targetField.parent().y() + targetField.cy();
+      
+          var connector = sourceGroup.parent().line(x1, y1, x2, y2).stroke({ width: 3, color: '#72767e' }).attr({class: sourceId + '_line'});
+  
+          connector.data({
+            source: link.fromPort,
+            target: link.toPort
+          });
 
-        var marker = sourceGroup.parent().marker(); // or draw.defs().marker()
-        marker.attr({
-            viewBox:'0 -5 10 10',
-            markerWidth: 15,
-            markerHeight: 15,
-            refX: 2,
-            refY: 2,
-            orient: 'auto'
-        });
-      var arrowhead = sourceGroup.parent().path(
-        'M0,0 V4 L2,2 Z'
-      ).fill('#059bd2');
-      marker.add(arrowhead);
-      connector.marker('end', marker);
-      }
-    });
+          var marker = sourceGroup.parent().marker(); // or draw.defs().marker()
+          marker.attr({
+              viewBox:'0 -5 10 10',
+              markerWidth: 15,
+              markerHeight: 15,
+              refX: 2,
+              refY: 2,
+              orient: 'auto'
+          });
+          var arrowhead = sourceGroup.parent().path(
+            'M0,0 V4 L2,2 Z'
+          ).fill('#059bd2');
+          marker.add(arrowhead);
+          connector.marker('end', marker);
+  
+          connector.on('mouseover', function(e) {
+            var tooltip = sourceGroup.parent().select('text.removeTooltip');
+            tooltip.attr({
+              'fill-opacity': 1,
+              x: e.layerX - 30, //(x1 + x2)/2 - 50,
+              y: e.layerY + 10 //(y1 + y2)/2 - 40
+            })
+          });
+
+          connector.on('mouseout', function(e) {
+            var tooltip = sourceGroup.parent().select('text.removeTooltip');
+            setTimeout(function() {
+              tooltip.attr({
+              'fill-opacity': 0
+            });
+          }, 1000);
+          });
+
+          connector.on('click', function(e) {
+            var connectorData = e.target.dataset;
+            _this.removeLinkData(connectorData);
+            e.target.remove();
+            var tooltip = sourceGroup.parent().select('text.removeTooltip');
+            tooltip.attr({
+            'fill-opacity': 0
+            });
+          });
+        }
+      });
+    }
   }
 }
